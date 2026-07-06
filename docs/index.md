@@ -6,6 +6,7 @@
 - [功能介绍](/docs/overview/features)
 - [Render 部署](/docs/overview/render)
 - [Docker 部署](/docs/overview/docker)
+- [Codex App 插件](/docs/overview/codex-app-plugin)
 - [第三方 GitHub 提示词仓库](/docs/overview/third-party-prompt-repositories)
 
 ## 操作手册
@@ -39,4 +40,5 @@
 ## 说明
 
 - 当前画布项目和“我的素材”主要保存在浏览器本地，跨设备可自行配置 WebDAV 同步。
-- AI API Key 保存在浏览器本地，并由前端直接请求 OpenAI 兼容接口。
+- AI API Key 保存在浏览器本地，并由前端直接请求 `https://img.xmu.la` 或 `https://aiba.hk` 固定接口站点。
+- 主应用在 `web/` 下使用 Vite 静态前端；文档站在 `docs/` 下使用 Next.js + Fumadocs。

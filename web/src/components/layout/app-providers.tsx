@@ -7,6 +7,7 @@ import zhCN from "antd/locale/zh_CN";
 
 import { ClientRootInit } from "@/components/layout/client-root-init";
 import { getAntThemeConfig } from "@/lib/app-theme";
+import { STORAGE_ERROR_EVENT } from "@/lib/localforage-storage";
 import { useThemeStore } from "@/stores/use-theme-store";
 
 const queryClient = new QueryClient({
@@ -32,6 +33,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
         <ConfigProvider locale={zhCN} theme={getAntThemeConfig(dark)}>
             <ProConfigProvider dark={dark}>
                 <App>
+                    <StorageErrorNotifier />
                     <QueryClientProvider client={queryClient}>
                         <ClientRootInit>{children}</ClientRootInit>
                     </QueryClientProvider>
@@ -39,4 +41,18 @@ export function AppProviders({ children }: { children: ReactNode }) {
             </ProConfigProvider>
         </ConfigProvider>
     );
+}
+
+function StorageErrorNotifier() {
+    const { message } = App.useApp();
+
+    useEffect(() => {
+        const notify = () => {
+            message.error({ key: "storage-error", content: "本地存储写入失败，请检查浏览器存储空间或隐私模式设置" });
+        };
+        window.addEventListener(STORAGE_ERROR_EVENT, notify);
+        return () => window.removeEventListener(STORAGE_ERROR_EVENT, notify);
+    }, [message]);
+
+    return null;
 }

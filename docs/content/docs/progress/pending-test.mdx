@@ -5,8 +5,16 @@ description: 当前版本已实现但仍需人工验证的变更项
 
 # 待测试
 
+- 配置与用户偏好：Base URL 改为固定下拉，只允许 `https://img.xmu.la` 和 `https://aiba.hk`，旧缓存和 URL 参数导入会自动归一到固定地址。
+- 静态部署：nginx 和 Vercel 配置新增安全响应头，静态构建资源使用长期缓存，入口页面保持 no-cache。
+- 前端加载：主要路由页面改为懒加载，需验证首页、图片、视频、素材、提示词库、画布等路由首次进入和刷新。
+- 画布导入导出：zip 导入新增大小、文件数、解压体积和 `projects.json` 结构校验，需验证正常包、缺失媒体文件和超限包提示。
+- 浏览器存储：画布项目改为按项目分 key 存储；大状态写入 IndexedDB 失败时不再兜底写入 localStorage，需验证存储空间不足或隐私模式提示。
+- 媒体存储：图片/音视频覆盖和清理时同步释放对象 URL，需验证素材删除、画布删除和重复上传后的预览状态。
+- 画布代码结构：画布项目页已拆出 `project-utils.ts`、`project-drag.ts`、`canvas-import.ts`、`use-canvas-project-history.ts`、`use-canvas-generation-requests.ts` 和 `use-canvas-agent-actions.ts`，需验证节点生成、重试、导入媒体、音视频节点、批量图片组、撤销重做、框选拖拽、zip 导入和 Agent 操作。
+- 文档说明：同步更新版本徽章、固定接口站点、zip 导入导出、Vercel/Docker 部署和 Seedance 代理说明。
 - Codex App 插件文档：新增插件安装教程，区分 AI 自动安装、手动安装和本仓库开发调试安装；同步优化插件 README 与技能说明。
-- 配置与用户偏好：每个模型渠道新增 OpenAI / Gemini 调用格式选择，默认 OpenAI，切换默认格式时同步更新默认 Base URL；渠道 Tab 增加紧凑醒目的提醒，说明模型是否可选需要到“模型”Tab 选择。
+- 配置与用户偏好：每个模型渠道新增 OpenAI / Gemini 调用格式选择，默认 OpenAI；渠道 Tab 增加紧凑醒目的提醒，说明模型是否可选需要到“模型”Tab 选择。
 - Gemini 调用格式：支持拉取 Gemini 模型列表，并用于文本问答、在线 Agent 工具调用、基础生图和图生图请求。
 - 音频和视频生成：选择 Gemini 调用格式时先给出不支持提示，仍需使用 OpenAI 兼容渠道。
 - WebDAV 同步：移除 Next.js 转发代理和连接方式选择，改为浏览器前端直接连接 WebDAV 服务。

@@ -92,9 +92,11 @@ codex plugin add infinite-canvas@infinite-canvas-local
 npx -y @basketikun/canvas-agent mcp
 ```
 
+插件只负责连接本地画布和本地 Agent，不保存或代理用户的 AI API Key。画布里的生成请求仍按网页右上角配置执行，并只会使用 `https://img.xmu.la` 或 `https://aiba.hk` 固定接口站点。
+
 ## 手动排查
 
-优先本地启动画布：
+优先本地启动画布。主画布应用在 `web/` 目录下使用 Vite，文档站在 `docs/` 目录下使用 Next.js，不要把文档站端口当成画布地址：
 
 ```bash
 cd web

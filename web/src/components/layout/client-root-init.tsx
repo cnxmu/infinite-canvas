@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
 import { App } from "antd";
 
-import { createModelChannel, useConfigStore } from "@/stores/use-config-store";
+import { createModelChannel, normalizeFixedBaseUrl, useConfigStore } from "@/stores/use-config-store";
 
 export function ClientRootInit({ children }: { children: ReactNode }) {
     const { message } = App.useApp();
@@ -14,9 +14,10 @@ export function ClientRootInit({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (handledConfigParams.current) return;
         const searchParams = new URLSearchParams(window.location.search);
-        const baseUrl = searchParams.get("baseUrl") || searchParams.get("baseurl");
+        const rawBaseUrl = searchParams.get("baseUrl") || searchParams.get("baseurl");
+        const baseUrl = rawBaseUrl ? normalizeFixedBaseUrl(rawBaseUrl) : "";
         const apiKey = searchParams.get("apiKey") || searchParams.get("apikey");
-        if (!baseUrl && !apiKey) return;
+        if (!rawBaseUrl && !apiKey) return;
         handledConfigParams.current = true;
         searchParams.delete("baseUrl");
         searchParams.delete("baseurl");

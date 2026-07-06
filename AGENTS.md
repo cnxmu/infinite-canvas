@@ -21,14 +21,14 @@
 
 ## 后端规范
 
-- 后端使用 Go + Gin + GORM。
+- 当前主应用已移除后端；如后续新增后端模块，默认使用 Go + Gin + GORM。
 - `handler/` 只处理 HTTP 入参、调用 service、返回 `OK` / `Fail`。
 - `service/` 放业务逻辑、默认值、校验、时间、ID、鉴权等处理。
 - `repository/` 只做数据库访问和 GORM 查询。
 - `model/` 只定义数据结构、枚举和简单模型方法。
 - 列表接口优先沿用 `model.Query`、`Normalize`、分页和标签筛选方式。
 - 业务接口保持 `{ code, data, msg }` 的响应结构。
-- 新增数据表时同步更新 `docs/backend-database.md`。
+- 新增数据表时同步更新 `docs/content/docs/backend/backend-database.mdx`；如果该文档尚未存在，先创建并加入 `docs/content/docs/backend/meta.json`。
 
 ## 前端规范
 
@@ -75,8 +75,8 @@
 - `docs/content/docs/progress/pending-test.mdx` 用来记录这个版本实际做了哪些可测试变更；`CHANGELOG.md` 的 `Unreleased` 只保留对这些变更的版本级归纳，避免逐条照搬实现细节。
 - 每次 todo 事项完成后，先从 `docs/content/docs/progress/todo.mdx` 移到 `docs/content/docs/progress/pending-test.mdx`，不要直接写进正式功能说明；用户确认测试通过后再更新 `docs/content/docs/overview/features.mdx`。
 - 每次任务完成前，都要根据实际变更检查并更新 `docs/content/docs/progress/todo.mdx` 和 `docs/content/docs/progress/pending-test.mdx`；如果功能或待办没有变化，也要确认无需修改。
-- 接口响应规则写到 `docs/content/docs/backend/api-response.mdx`。
-- 数据库结构写到 `docs/content/docs/backend/backend-database.mdx`。
+- 接口响应规则写到 `docs/content/docs/backend/api-response.mdx`；如果该文档尚未存在，先创建并加入 `docs/content/docs/backend/meta.json`。
+- 数据库结构写到 `docs/content/docs/backend/backend-database.mdx`；如果该文档尚未存在，先创建并加入 `docs/content/docs/backend/meta.json`。
 - 文档不要写过期日期；除非用户明确要求记录具体时间。
 
 ## 发版本流程
@@ -90,5 +90,5 @@
 ## 项目注意事项
 
 - 当前画布项目和“我的素材”主要保存在浏览器本地，不要在文档中误写成已支持云同步。
-- 当前 AI API Key 存在浏览器本地，并由前端直接请求 OpenAI 兼容接口；涉及安全说明时要写清楚。
+- 当前 AI API Key 存在浏览器本地，并由前端直接请求 `https://img.xmu.la` 或 `https://aiba.hk` 固定接口站点；涉及安全说明时要写清楚。
 - Docker 静态资源路径目前仍是待办项，文档中不要过度承诺生产部署已经完全验证。

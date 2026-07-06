@@ -27,7 +27,8 @@ Please include:
 - Impact and attack scenario.
 - Any relevant logs, screenshots, or proof of concept, with secrets removed.
 - Whether the issue affects local-only usage, hosted deployments, browser
-  storage, WebDAV sync, AI provider configuration, or API proxy behavior.
+  storage, WebDAV sync, fixed API endpoint configuration, or provider request
+  handling.
 
 ## Scope
 
@@ -36,7 +37,7 @@ Examples of in-scope reports:
 - Cross-site scripting or token exfiltration in the web app.
 - Exposure of locally stored API keys or synced canvas data caused by project
   code.
-- Unsafe file handling, import/export behavior, or WebDAV proxy behavior.
+- Unsafe file handling, import/export behavior, or WebDAV connection handling.
 - Authentication, authorization, or access-control flaws in project-managed
   features.
 - Supply-chain issues that are exploitable through this repository's shipped

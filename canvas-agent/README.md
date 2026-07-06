@@ -89,8 +89,25 @@ default_tools_approval_mode = "approve"
 - `canvas_get_selection`
 - `canvas_export_snapshot`
 - `canvas_apply_ops`
+- `canvas_create_node`
 - `canvas_create_text_node`
+- `canvas_create_text_nodes`
+- `canvas_create_config_node`
 - `canvas_create_image_prompt_flow`
+- `canvas_create_generation_flow`
+- `canvas_generate_text`
+- `canvas_generate_image`
+- `canvas_generate_video`
+- `canvas_generate_audio`
+- `canvas_update_node`
+- `canvas_update_node_text`
+- `canvas_move_nodes`
+- `canvas_resize_node`
+- `canvas_delete_nodes`
+- `canvas_connect_nodes`
+- `canvas_select_nodes`
+- `canvas_set_viewport`
+- `canvas_run_generation`
 
 `canvas_apply_ops` 示例：
 

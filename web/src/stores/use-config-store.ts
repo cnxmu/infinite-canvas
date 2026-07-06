@@ -56,19 +56,19 @@ export type WebdavSyncConfig = {
 export const CONFIG_STORE_KEY = "infinite-canvas:ai_config_store";
 export type ModelCapability = "image" | "video" | "text" | "audio";
 const CHANNEL_MODEL_SEPARATOR = "::";
-const OPENAI_BASE_URL = "https://api.openai.com";
-const GEMINI_BASE_URL = "https://generativelanguage.googleapis.com";
+export const FIXED_BASE_URLS = ["https://img.xmu.la", "https://aiba.hk"] as const;
+const DEFAULT_BASE_URL = FIXED_BASE_URLS[0];
 
 export const defaultConfig: AiConfig = {
     channelMode: "local",
-    baseUrl: OPENAI_BASE_URL,
+    baseUrl: DEFAULT_BASE_URL,
     apiKey: "",
     apiFormat: "openai",
     channels: [
         {
             id: "default",
             name: "默认渠道",
-            baseUrl: OPENAI_BASE_URL,
+            baseUrl: DEFAULT_BASE_URL,
             apiKey: "",
             apiFormat: "openai",
             models: ["gpt-image-2", "grok-imagine-video", "gpt-5.5", "gpt-4o-mini-tts"],
@@ -106,6 +106,18 @@ export const defaultWebdavSyncConfig: WebdavSyncConfig = {
     directory: "infinite-canvas",
     lastSyncedAt: "",
 };
+
+export function normalizeFixedBaseUrl(baseUrl: string | undefined) {
+    const normalized = (baseUrl || "").trim().replace(/\/+$/, "");
+    const exact = FIXED_BASE_URLS.find((url) => url === normalized);
+    if (exact) return exact;
+    try {
+        const origin = new URL(normalized).origin;
+        return FIXED_BASE_URLS.find((url) => url === origin) || DEFAULT_BASE_URL;
+    } catch {
+        return DEFAULT_BASE_URL;
+    }
+}
 
 type ConfigStore = {
     config: AiConfig;
@@ -199,6 +211,7 @@ export const useConfigStore = create<ConfigStore>()(
                 const persistedConfig = (persistedState.config || {}) as Partial<AiConfig>;
                 const persistedWebdav = (persistedState.webdav || {}) as Partial<WebdavSyncConfig>;
                 const config = { ...defaultConfig, ...persistedConfig };
+                config.baseUrl = normalizeFixedBaseUrl(config.baseUrl);
                 if (!Array.isArray(persistedConfig.channels)) config.channels = [];
                 const channels = normalizeChannels(config);
                 const models = modelOptionsFromChannels(channels);
@@ -252,7 +265,7 @@ export function createModelChannel(channel?: Partial<ModelChannel>): ModelChanne
     return {
         id: channel?.id?.trim() || nanoid(),
         name: channel?.name?.trim() || "新渠道",
-        baseUrl: channel?.baseUrl?.trim() || defaultBaseUrlForApiFormat(apiFormat),
+        baseUrl: normalizeFixedBaseUrl(channel?.baseUrl || defaultBaseUrlForApiFormat(apiFormat)),
         apiKey: channel?.apiKey || "",
         apiFormat,
         models: uniqueRawModels(channel?.models || []),
@@ -350,8 +363,8 @@ function normalizeChannels(config: AiConfig) {
     return channels.map((channel) => ({ ...channel, models: uniqueRawModels(channel.models) }));
 }
 
-export function defaultBaseUrlForApiFormat(apiFormat: ApiCallFormat) {
-    return apiFormat === "gemini" ? GEMINI_BASE_URL : OPENAI_BASE_URL;
+export function defaultBaseUrlForApiFormat(_apiFormat: ApiCallFormat) {
+    return DEFAULT_BASE_URL;
 }
 
 function normalizeApiFormat(apiFormat: unknown): ApiCallFormat {
