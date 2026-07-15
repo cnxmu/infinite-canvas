@@ -1,4 +1,4 @@
-import { unzipSync, zipSync } from "fflate";
+import { Unzip, UnzipInflate, zipSync } from "fflate";
 
 type ZipFile = {
     name: string;
@@ -30,12 +30,28 @@ export async function readZip(file: Blob, options: ReadZipOptions = {}) {
     const maxEntries = options.maxEntries ?? DEFAULT_MAX_ENTRIES;
     const maxOutputBytes = options.maxOutputBytes ?? DEFAULT_MAX_OUTPUT_BYTES;
     if (file.size > maxInputBytes) throw new Error(`压缩包不能超过 ${formatBytes(maxInputBytes)}`);
-    const entries = unzipSync(new Uint8Array(await file.arrayBuffer()));
-    const names = Object.keys(entries);
-    if (names.length > maxEntries) throw new Error(`压缩包文件数量不能超过 ${maxEntries} 个`);
-    const outputBytes = names.reduce((total, name) => total + entries[name].byteLength, 0);
-    if (outputBytes > maxOutputBytes) throw new Error(`压缩包解压后不能超过 ${formatBytes(maxOutputBytes)}`);
-    return new Map(Object.entries(entries).map(([name, data]) => [name, new Blob([data])]));
+    const entries = new Map<string, Blob>();
+    const entryNames = new Set<string>();
+    let outputBytes = 0;
+    let entryCount = 0;
+    const unzip = new Unzip((entry) => {
+        entryCount += 1;
+        if (entryCount > maxEntries) throw new Error(`压缩包文件数量不能超过 ${maxEntries} 个`);
+        if (entryNames.has(entry.name)) throw new Error(`压缩包包含重复文件：${entry.name}`);
+        entryNames.add(entry.name);
+        const chunks: Uint8Array[] = [];
+        entry.ondata = (error, chunk, final) => {
+            if (error) throw error;
+            outputBytes += chunk.byteLength;
+            if (outputBytes > maxOutputBytes) throw new Error(`压缩包解压后不能超过 ${formatBytes(maxOutputBytes)}`);
+            chunks.push(chunk);
+            if (final) entries.set(entry.name, new Blob(chunks));
+        };
+        entry.start();
+    });
+    unzip.register(UnzipInflate);
+    unzip.push(new Uint8Array(await file.arrayBuffer()), true);
+    return entries;
 }
 
 function formatBytes(bytes: number) {

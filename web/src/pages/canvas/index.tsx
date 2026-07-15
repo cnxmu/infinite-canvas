@@ -28,7 +28,7 @@ export default function CanvasPage() {
 
     const mode = searchParams.get("mode");
     const agentMode = mode === "new" || mode === "recent" || mode === "choose";
-    const agentQuery = agentMode ? `?${searchParams.toString()}` : "";
+    const agentQuery = agentMode ? `?${searchParams.toString()}${window.location.hash}` : "";
     const enterProject = (id: string) => {
         navigate(`/canvas/${id}${agentQuery}`);
     };
@@ -46,6 +46,7 @@ export default function CanvasPage() {
                     project.files.map(async (item) => {
                         const blob = zip.get(item.path);
                         if (!blob) throw new Error(`缺少媒体文件：${item.path}`);
+                        if (blob.size !== item.bytes) throw new Error(`媒体文件大小不一致：${item.path}`);
                         const typedBlob = blob.type ? blob : blob.slice(0, blob.size, item.mimeType);
                         await (item.storageKey.startsWith("image:") ? setImageBlob(item.storageKey, typedBlob) : setMediaBlob(item.storageKey, typedBlob));
                     }),

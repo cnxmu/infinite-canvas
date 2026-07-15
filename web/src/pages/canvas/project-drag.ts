@@ -23,8 +23,9 @@ export function dragInitialPositions(nodes: CanvasNodeData[], selectedNodeIds: S
 }
 
 export function moveNodesByDrag(nodes: CanvasNodeData[], initialPositions: DragNodePosition[], dx: number, dy: number) {
+    const initialById = new Map(initialPositions.map((item) => [item.id, item]));
     return nodes.map((node) => {
-        const initial = initialPositions.find((item) => item.id === node.id);
+        const initial = initialById.get(node.id);
         return initial ? { ...node, position: { x: initial.x + dx, y: initial.y + dy } } : node;
     });
 }

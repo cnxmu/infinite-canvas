@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess, type StdioOptions } from "node:child_process";
+import { spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -87,13 +87,6 @@ export async function archiveCodexThread(emit: AgentEmit, threadId: string, cwd?
     codexApp ||= await CodexAppClient.start(emit);
     await loadCodexThread(emit, threadId, cwd, false);
     await codexApp.archiveThread(threadId);
-}
-
-export function runClaudeTurn(prompt: string, emit: AgentEmit) {
-    if (!prompt.trim()) return;
-    const child = spawnAgent("claude", ["-p", "--output-format", "stream-json", "--verbose", "--include-partial-messages", "--allowedTools", "mcp__infinite-canvas__*", prompt], ["ignore", "pipe", "pipe"], emit);
-    if (!child) return;
-    pipeJsonLines(child, emit, "claude");
 }
 
 async function ensureCodexThread(app: CodexAppClient, options: CodexRunOptions) {
@@ -456,34 +449,6 @@ function imageExt(type = "") {
 
 function codexBin() {
     return path.join(path.dirname(require.resolve("@openai/codex/package.json")), "bin", "codex.js");
-}
-
-function pipeJsonLines(child: ReturnType<typeof spawn>, emit: AgentEmit, agent: string) {
-    let out = "";
-    child.stdout?.on("data", (chunk) => {
-        out += chunk.toString();
-        const lines = out.split(/\r?\n/);
-        out = lines.pop() || "";
-        lines.filter(Boolean).forEach((line) => {
-            try {
-                emit("agent_event", { agent, ...JSON.parse(line) });
-            } catch {
-                emit("agent_event", { agent, type: "raw", text: line });
-            }
-        });
-    });
-    child.stderr?.on("data", (chunk) => emit("agent_log", { text: chunk.toString() }));
-    child.on("error", (error) => emit("agent_error", { message: error.message }));
-    child.on("close", (code) => emit("agent_done", { agent, code }));
-}
-
-function spawnAgent(name: string, args: string[], stdio: StdioOptions, emit: AgentEmit) {
-    try {
-        return spawn(name, args, { stdio, shell: process.platform === "win32", windowsHide: true });
-    } catch (error) {
-        emit("agent_error", { message: errorMessage(error) });
-        return null;
-    }
 }
 
 function errorMessage(error: unknown) {

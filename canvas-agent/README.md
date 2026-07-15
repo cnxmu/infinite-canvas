@@ -135,7 +135,7 @@ default_tools_approval_mode = "approve"
 
 ## Claude Code
 
-Claude Code Adapter 代码暂时保留，但当前网页侧边栏只开放 Codex。后续开放 Claude 入口时，Canvas Agent 会调用本机 `claude -p --output-format stream-json` 并把流式 JSON 事件转发到侧边栏。
+当前网页侧边栏只开放 Codex，Canvas Agent 不再暴露 Claude CLI HTTP Adapter。后续开放 Claude 入口时将直接采用 Claude Agent SDK，避免通过系统 shell 拼接和执行用户提示词。
 
 如果希望 Claude Code 也能操作画布，需要给 Claude Code 添加同一个 MCP。建议用 user scope，避免 Canvas Agent 从不同目录启动时找不到配置：
 
@@ -149,4 +149,4 @@ claude mcp add --scope user --transport stdio infinite-canvas -- npx -y @basketi
 claude mcp add --scope user --transport stdio infinite-canvas -- node /path/to/infinite-canvas/canvas-agent/dist/index.js mcp
 ```
 
-Canvas Agent 调用 Claude Code 时会默认带上 `--allowedTools mcp__infinite-canvas__*`，画布写操作仍由网页侧边栏确认。
+Claude Code 通过 MCP 操作画布时，画布写操作仍由网页侧边栏确认。

@@ -14,16 +14,27 @@ export function ClientRootInit({ children }: { children: ReactNode }) {
     useEffect(() => {
         if (handledConfigParams.current) return;
         const searchParams = new URLSearchParams(window.location.search);
-        const rawBaseUrl = searchParams.get("baseUrl") || searchParams.get("baseurl");
+        const fragmentParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const rawBaseUrl = fragmentParams.get("baseUrl") || fragmentParams.get("baseurl") || searchParams.get("baseUrl") || searchParams.get("baseurl");
         const baseUrl = rawBaseUrl ? normalizeFixedBaseUrl(rawBaseUrl) : "";
-        const apiKey = searchParams.get("apiKey") || searchParams.get("apikey");
-        if (!rawBaseUrl && !apiKey) return;
+        const apiKey = fragmentParams.get("apiKey") || fragmentParams.get("apikey");
+        const legacyApiKey = searchParams.get("apiKey") || searchParams.get("apikey");
+        if (!rawBaseUrl && !apiKey && !legacyApiKey) return;
         handledConfigParams.current = true;
         searchParams.delete("baseUrl");
         searchParams.delete("baseurl");
         searchParams.delete("apiKey");
         searchParams.delete("apikey");
-        window.history.replaceState(null, "", `${window.location.pathname}${searchParams.size ? `?${searchParams}` : ""}${window.location.hash}`);
+        fragmentParams.delete("baseUrl");
+        fragmentParams.delete("baseurl");
+        fragmentParams.delete("apiKey");
+        fragmentParams.delete("apikey");
+        window.history.replaceState(null, "", `${window.location.pathname}${searchParams.size ? `?${searchParams}` : ""}${fragmentParams.size ? `#${fragmentParams}` : ""}`);
+        if (legacyApiKey && !apiKey) {
+            openConfigDialog(false);
+            message.warning("为避免密钥进入服务器日志，API Key 请通过 URL #apiKey 片段导入");
+            return;
+        }
         const firstChannel = config.channels[0];
         updateConfig(
             "channels",
@@ -42,7 +53,7 @@ export function ClientRootInit({ children }: { children: ReactNode }) {
         if (baseUrl) updateConfig("baseUrl", baseUrl);
         if (apiKey) updateConfig("apiKey", apiKey);
         openConfigDialog(false);
-        message.success("已导入本地直连配置");
+        message.success("已安全导入本地直连配置");
     }, [config.channels, message, openConfigDialog, updateConfig]);
 
     return <>{children}</>;

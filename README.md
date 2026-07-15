@@ -68,10 +68,10 @@ docker run --rm -p 3000:3000 infinite-canvas
 如果使用 New API，可在 `系统设置 -> 聊天方式 -> 添加聊天设置` 中填入：
 
 ```text
-https://canvas.best?apiKey={key}&baseUrl=https://img.xmu.la
+https://canvas.best?baseUrl=https://img.xmu.la#apiKey={key}
 ```
 
-跳转后会自动打开配置弹窗并填入 API Key。`baseUrl` 参数只会归一到 `https://img.xmu.la` 或 `https://aiba.hk`，不再写入任意地址。
+跳转后会自动打开配置弹窗并填入 API Key。API Key 放在 URL fragment 中，不会随页面请求进入服务器日志；`baseUrl` 参数只会归一到 `https://img.xmu.la` 或 `https://aiba.hk`，不再写入任意地址。
 如果自己部署了，可以把 `https://canvas.best` 替换成你部署的地址。
 
 ## 效果展示

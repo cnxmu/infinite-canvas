@@ -3,6 +3,7 @@ import { persist, type PersistStorage, type StorageValue } from "zustand/middlew
 
 import { nanoid } from "nanoid";
 import { localForageStorage } from "@/lib/localforage-storage";
+import { recordSyncDeletions } from "@/services/sync-tombstones";
 import type { CanvasBackgroundMode } from "@/lib/canvas-theme";
 import type { CanvasAssistantSession, CanvasConnection, CanvasNodeData, ViewportTransform } from "@/types/canvas";
 
@@ -40,6 +41,9 @@ type PersistedCanvasIndex = { version: 2; projectIds: string[] };
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let queuedPersistState: PersistedCanvasState | null = null;
 let persistedProjectIds = new Set<string>();
+let persistedProjects = new Map<string, CanvasProject>();
+let queuedPersistRequest: { name: string; value: StorageValue<CanvasStore>; state: PersistedCanvasState } | null = null;
+let persistQueue: Promise<unknown> = Promise.resolve();
 
 const canvasStorage: PersistStorage<CanvasStore> = {
     getItem: async (name) => {
@@ -61,27 +65,35 @@ const canvasStorage: PersistStorage<CanvasStore> = {
                 )
             ).filter((project): project is CanvasProject => Boolean(project));
             persistedProjectIds = new Set(projects.map((project) => project.id));
+            persistedProjects = new Map(projects.map((project) => [project.id, project]));
             queuedPersistState = { projects };
             return { ...parsed, state: { projects } as StorageValue<CanvasStore>["state"] };
         }
         const state = parsed.state as PersistedCanvasState;
         queuedPersistState = state;
         persistedProjectIds = new Set((state.projects || []).map((project) => project.id));
+        persistedProjects = new Map((state.projects || []).map((project) => [project.id, project]));
         return parsed;
     },
     setItem: (name, value) => {
         const nextState = value.state as PersistedCanvasState;
         if (queuedPersistState && queuedPersistState.projects === nextState.projects) return;
         queuedPersistState = nextState;
+        queuedPersistRequest = { name, value, state: nextState };
         if (saveTimer) clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
             saveTimer = null;
-            void persistCanvasProjects(name, value, nextState);
+            flushCanvasPersistence();
         }, 400);
     },
     removeItem: async (name) => {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = null;
+        queuedPersistRequest = null;
+        await persistQueue.catch(() => undefined);
         await Promise.all([...persistedProjectIds].map((id) => localForageStorage.removeItem(canvasProjectKey(id))));
         persistedProjectIds.clear();
+        persistedProjects.clear();
         await localForageStorage.removeItem(name);
     },
 };
@@ -135,11 +147,13 @@ export const useCanvasStore = create<CanvasStore>()(
                 set((state) => ({
                     projects: state.projects.map((project) => (project.id === id ? { ...project, title: title.trim() || project.title, updatedAt: new Date().toISOString() } : project)),
                 })),
-            deleteProjects: (ids) =>
+            deleteProjects: (ids) => {
+                void recordSyncDeletions("canvas", ids);
                 set((state) => {
                     const projects = state.projects.filter((project) => !ids.includes(project.id));
                     return { projects };
-                }),
+                });
+            },
             replaceProjects: (projects) => set({ projects }),
             updateProject: (id, patch) =>
                 set((state) => ({
@@ -162,12 +176,22 @@ export const useCanvasStore = create<CanvasStore>()(
 
 async function persistCanvasProjects(name: string, value: StorageValue<CanvasStore>, state: PersistedCanvasState) {
     const projectIds = state.projects.map((project) => project.id);
-    await Promise.all(state.projects.map((project) => localForageStorage.setItem(canvasProjectKey(project.id), JSON.stringify(project))));
+    const changedProjects = state.projects.filter((project) => persistedProjects.get(project.id) !== project);
+    await Promise.all(changedProjects.map((project) => localForageStorage.setItem(canvasProjectKey(project.id), JSON.stringify(project))));
     const nextProjectIds = new Set(projectIds);
     await Promise.all([...persistedProjectIds].filter((id) => !nextProjectIds.has(id)).map((id) => localForageStorage.removeItem(canvasProjectKey(id))));
     persistedProjectIds = nextProjectIds;
+    persistedProjects = new Map(state.projects.map((project) => [project.id, project]));
     const index: StorageValue<CanvasStore> = { ...value, state: { version: 2, projectIds } as unknown as StorageValue<CanvasStore>["state"] };
     await localForageStorage.setItem(name, JSON.stringify(index));
+}
+
+export function flushCanvasPersistence() {
+    const request = queuedPersistRequest;
+    if (!request) return persistQueue;
+    queuedPersistRequest = null;
+    persistQueue = persistQueue.catch(() => undefined).then(() => persistCanvasProjects(request.name, request.value, request.state));
+    return persistQueue;
 }
 
 function canvasProjectKey(id: string) {
@@ -176,4 +200,11 @@ function canvasProjectKey(id: string) {
 
 function isCanvasProjectIndex(value: unknown): value is PersistedCanvasIndex {
     return Boolean(value && typeof value === "object" && !Array.isArray(value) && (value as PersistedCanvasIndex).version === 2 && Array.isArray((value as PersistedCanvasIndex).projectIds));
+}
+
+if (typeof window !== "undefined") {
+    window.addEventListener("pagehide", () => void flushCanvasPersistence());
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") void flushCanvasPersistence();
+    });
 }

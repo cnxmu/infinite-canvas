@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
-import { useSearchParams } from "react-router-dom";
 import { App, Button, Input, Segmented, Tooltip } from "antd";
 import copyToClipboard from "copy-to-clipboard";
 import { Copy, FolderOpen, History, KeyRound, Link2, LoaderCircle, PlugZap, Plus, RefreshCw, RotateCcw, Terminal, Trash2 } from "lucide-react";
@@ -10,6 +9,7 @@ import { useThemeStore } from "@/stores/use-theme-store";
 import { useUserStore } from "@/stores/use-user-store";
 import { useCanvasAgentStore, type AgentAttachment, type AgentChatItem, type AgentEventLog, type AgentPanelTab, type AgentPendingToolCall, type AgentThreadSummary } from "@/stores/canvas/use-canvas-agent-store";
 import { summarizeCanvasAgentOps, type CanvasAgentOp, type CanvasAgentSnapshot } from "@/lib/canvas/canvas-agent-ops";
+import { clearCanvasAgentLaunchConfig, normalizeLocalAgentEndpoint, readCanvasAgentLaunchConfig } from "@/lib/canvas/canvas-agent-endpoint";
 import { AgentChatComposer, AgentChatMessage, AgentPanelTabs, AgentPendingToolCard, AgentWorkingMessage, type CanvasAgentChatAttachment } from "./canvas-agent-chat-ui";
 
 const PANEL_MOTION_SECONDS = 0.5;
@@ -43,7 +43,6 @@ export function CanvasLocalAgentPanel({ snapshot, canUndoOps, collapsed, embedde
     const theme = canvasThemes[useThemeStore((state) => state.theme)];
     const user = useUserStore((state) => state.user);
     const { message, modal } = App.useApp();
-    const [searchParams] = useSearchParams();
     const { width, url, token, connected, enabled, prompt, attachments, sending, waiting, messages, eventLogs, threads, activeThreadId, workspacePath, loadingThreads, activeTab, confirmTools, activity, connectError, pendingTool, setAgentState, addMessage: pushMessage, addEventLog: pushEventLog, clearEventLogs } = useCanvasAgentStore();
     const [resizing, setResizing] = useState(false);
     const listRef = useRef<HTMLDivElement>(null);
@@ -52,12 +51,12 @@ export function CanvasLocalAgentPanel({ snapshot, canUndoOps, collapsed, embedde
     const pendingToolRef = useRef<AgentPendingToolCall | null>(null);
     const onApplyOpsRef = useRef(onApplyOps);
     const autoConnectRef = useRef(false);
+    const launchConfigRef = useRef(readCanvasAgentLaunchConfig());
     const connectedRef = useRef(false);
     const errorLoggedRef = useRef(false);
     const attachmentUrlsRef = useRef(new Set<string>());
     const clientIdRef = useRef(typeof crypto === "undefined" ? `${Date.now()}` : crypto.randomUUID());
     const endpoint = useMemo(() => url.trim().replace(/\/$/, ""), [url]);
-    const urlAgentAutoConnect = searchParams.has("agentUrl") && searchParams.has("agentToken");
     const loadThreads = useCallback(async () => {
         const projectId = snapshotRef.current.projectId;
         if ((!connectedRef.current && !useCanvasAgentStore.getState().connected) || !projectId) return;
@@ -296,39 +295,33 @@ export function CanvasLocalAgentPanel({ snapshot, canUndoOps, collapsed, embedde
             clearAgentSession({ enabled: false, connected: false, activity: "离线", connectError: "" });
             return;
         }
-        const urlToken = searchParams.get("agentToken") || "";
-        const urlEndpoint = searchParams.get("agentUrl") || "";
+        const launchConfig = launchConfigRef.current;
+        const urlToken = launchConfig?.token || "";
+        const urlEndpoint = launchConfig?.endpoint || "";
         const discovered = urlToken ? null : await discoverAgentConfig(endpoint || DEFAULT_AGENT_URL);
-        const nextEndpoint = (urlEndpoint || discovered?.url || endpoint || DEFAULT_AGENT_URL).trim().replace(/\/$/, "");
-        const nextToken = (urlToken || token.trim() || discovered?.token || "").trim();
-        if (!nextEndpoint) {
-            const text = "请填写本地 Agent 地址";
+        let nextEndpoint = "";
+        try {
+            nextEndpoint = normalizeLocalAgentEndpoint(urlEndpoint || discovered?.url || endpoint || DEFAULT_AGENT_URL);
+        } catch (error) {
+            const text = error instanceof Error ? error.message : "本地 Agent 地址格式不正确";
             setAgentState({ connectError: text });
             if (!headless) message.warning(text);
             return;
         }
+        const nextToken = (urlToken || token.trim() || discovered?.token || "").trim();
         if (!nextToken) {
             const text = "没有发现本地 Agent，请先在 Codex 使用插件或手动启动 Canvas Agent";
             setAgentState({ connectError: text });
             if (!headless) message.warning(text);
             return;
         }
-        try {
-            const parsed = new URL(nextEndpoint);
-            if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("invalid protocol");
-        } catch {
-            const text = "本地 Agent 地址格式不正确";
-            setAgentState({ connectError: text });
-            if (!headless) message.warning(text);
-            return;
-        }
         errorLoggedRef.current = false;
         setAgentState({ url: nextEndpoint, token: nextToken, enabled: true, connected: false, activity: "连接中", connectError: "", activeTab: "setup" });
+        if (launchConfig) {
+            launchConfigRef.current = null;
+            clearCanvasAgentLaunchConfig();
+        }
     };
-
-    useEffect(() => {
-        if (urlAgentAutoConnect && confirmTools) setAgentState({ confirmTools: false });
-    }, [confirmTools, setAgentState, urlAgentAutoConnect]);
 
     useEffect(() => {
         if (!autoConnect || autoConnectRef.current || enabled || connected) return;

@@ -5,6 +5,13 @@
 + [新增] 新增Codex App插件支持。
 + [优化] 增强静态部署安全头、缓存策略和前端路由加载。
 + [优化] 增强画布导入、浏览器存储和媒体资源清理稳定性。
++ [优化] 优化大画布资源索引、节点渲染和按项目持久化性能。
++ [修复] 修复 Agent 自动连接信任边界、Claude shell 注入风险和多画布状态隔离。
++ [修复] 修复媒体引用误清理、视频素材共享文件、画布恢复竞态和 WebDAV 同步覆盖问题。
++ [修复] WebDAV 同步增加删除墓碑，避免跨设备恢复已删除数据。
++ [优化] ZIP 改为受限流式解压，素材包增加完整结构与媒体校验。
++ [调整] API Key 和 Canvas Agent token 改用 URL fragment 导入。
++ [工程] 新增 TypeScript lint、Vitest 单元测试和 GitHub Actions 质量检查。
 + [修复] 修复前端 TypeScript 构建报错。
 + [调整] Docker 运行镜像改为 nginx 静态托管。
 + [文档] 同步固定接口站点、zip 导入导出、部署说明、Codex App 插件和本地 Agent 文档。
