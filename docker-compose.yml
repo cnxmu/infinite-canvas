@@ -1,7 +1,19 @@
 services:
   app:
-    image: ghcr.io/cnxmu/infinite-canvas:latest
-    container_name: infinite-canvas
+    image: ghcr.io/cnxmu/infinite-canvas:${IMAGE_TAG:-latest}
     ports:
-      - "3000:3000"
+      - "${APP_PORT:-3000}:3000"
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

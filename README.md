@@ -5,9 +5,8 @@
 <h1 align="center">无限画布 (infinite-canvas)</h1>
 
 <p align="center">
-  <a href="https://linux.do/"><img src="https://img.shields.io/badge/Linux.do-Community-2b6de8?style=flat-square" alt="Linux.do"></a>
-  <a href="https://render.com/deploy?repo=https://github.com/basketikun/infinite-canvas"><img src="https://img.shields.io/badge/Render-Deploy-46e3b7?style=flat-square&logo=render&logoColor=111111" alt="Deploy to Render"></a>
-  <a href="https://github.com/basketikun/infinite-canvas"><img src="https://img.shields.io/github/stars/basketikun/infinite-canvas?style=flat-square&logo=github" alt="GitHub stars"></a>
+  <a href="https://render.com/deploy?repo=https://github.com/cnxmu/infinite-canvas"><img src="https://img.shields.io/badge/Render-Deploy-46e3b7?style=flat-square&logo=render&logoColor=111111" alt="Deploy to Render"></a>
+  <a href="https://github.com/cnxmu/infinite-canvas"><img src="https://img.shields.io/github/stars/cnxmu/infinite-canvas?style=flat-square&logo=github" alt="GitHub stars"></a>
   <a href="VERSION"><img src="https://img.shields.io/badge/version-v0.5.0-2563eb?style=flat-square" alt="Version"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-f97316?style=flat-square" alt="License"></a>
   <a href="https://vite.dev/"><img src="https://img.shields.io/badge/Vite-7-646cff?style=flat-square&logo=vite&logoColor=white" alt="Vite"></a>
@@ -45,21 +44,34 @@
 AI API Key、固定接口站点选择、画布、素材和生成记录默认保存在浏览器本地。
 
 ```bash
-git clone git@github.com:basketikun/infinite-canvas.git
+git clone https://github.com/cnxmu/infinite-canvas.git
 cd infinite-canvas
 cd web
 bun install
 bun run dev
 ```
 
-Docker 运行：
+使用发布镜像运行：
+
+```bash
+docker compose pull
+docker compose up -d
+```
+
+Compose 默认使用 `ghcr.io/cnxmu/infinite-canvas:latest` 并监听主机 `3000` 端口。可通过 `IMAGE_TAG` 固定镜像版本，通过 `APP_PORT` 修改主机端口，例如：
+
+```bash
+APP_PORT=8080 IMAGE_TAG=v0.5.0 docker compose up -d
+```
+
+基于当前源码构建：
 
 ```bash
 docker build -t infinite-canvas .
 docker run --rm -p 3000:3000 infinite-canvas
 ```
 
-运行后默认端口3000，可访问 `http://localhost:3000`。
+运行后可访问 `http://localhost:3000`。容器使用 Nginx 托管静态前端，内置 SPA 路由回退、静态资源缓存、安全响应头、gzip 和 `/healthz` 健康检查；画布、素材和 API Key 仍保存在用户浏览器中，无需挂载数据目录。
 
 首次打开后进入右上角配置，在 `https://img.xmu.la` 和 `https://aiba.hk` 中选择接口站点，并填入自己的 `API Key` 和模型名。
 
