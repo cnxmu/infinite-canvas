@@ -11,10 +11,11 @@
 + [修复] WebDAV 同步增加删除墓碑，避免跨设备恢复已删除数据。
 + [优化] ZIP 改为受限流式解压，素材包增加完整结构与媒体校验。
 + [调整] API Key 和 Canvas Agent token 改用 URL fragment 导入。
++ [调整] AI Base URL 唯一固定为 `https://www.aiba.hk`，并移除 Gemini 默认地址残留。
 + [工程] 新增 TypeScript lint、Vitest 单元测试和 GitHub Actions 质量检查。
 + [修复] 修复前端 TypeScript 构建报错。
 + [调整] Docker 运行镜像改为 nginx 静态托管。
-+ [文档] 同步固定接口站点、zip 导入导出、部署说明、Codex App 插件和本地 Agent 文档。
++ [文档] 新增部署文档、使用教程、使用说明和使用技术文档，并同步固定接口站点、zip 导入导出、Codex App 插件和本地 Agent 说明。
 
 ## v0.5.0 - 2026-07-05
 

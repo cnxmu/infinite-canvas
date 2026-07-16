@@ -92,7 +92,7 @@ codex plugin add infinite-canvas@infinite-canvas-local
 npx -y @basketikun/canvas-agent mcp
 ```
 
-插件只负责连接本地画布和本地 Agent，不保存或代理用户的 AI API Key。画布里的生成请求仍按网页右上角配置执行，并只会使用 `https://img.xmu.la` 或 `https://aiba.hk` 固定接口站点。
+插件只负责连接本地画布和本地 Agent，不保存或代理用户的 AI API Key。画布里的生成请求仍按网页右上角配置执行，并只会使用固定接口站点 `https://www.aiba.hk`。
 
 ## 手动排查
 

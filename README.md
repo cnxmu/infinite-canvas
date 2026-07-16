@@ -41,7 +41,7 @@
 
 ## 快速开始
 
-AI API Key、固定接口站点选择、画布、素材和生成记录默认保存在浏览器本地。
+AI API Key、模型配置、画布、素材和生成记录默认保存在浏览器本地。
 
 ```bash
 git clone https://github.com/cnxmu/infinite-canvas.git
@@ -73,17 +73,17 @@ docker run --rm -p 3000:3000 infinite-canvas
 
 运行后可访问 `http://localhost:3000`。容器使用 Nginx 托管静态前端，内置 SPA 路由回退、静态资源缓存、安全响应头、gzip 和 `/healthz` 健康检查；画布、素材和 API Key 仍保存在用户浏览器中，无需挂载数据目录。
 
-首次打开后进入右上角配置，在 `https://img.xmu.la` 和 `https://aiba.hk` 中选择接口站点，并填入自己的 `API Key` 和模型名。
+首次打开后进入右上角配置，确认固定接口站点 `https://www.aiba.hk`，并填入自己的 `API Key` 和模型名。
 
 ## New API 自动配置
 
 如果使用 New API，可在 `系统设置 -> 聊天方式 -> 添加聊天设置` 中填入：
 
 ```text
-https://canvas.best?baseUrl=https://img.xmu.la#apiKey={key}
+https://canvas.best#apiKey={key}
 ```
 
-跳转后会自动打开配置弹窗并填入 API Key。API Key 放在 URL fragment 中，不会随页面请求进入服务器日志；`baseUrl` 参数只会归一到 `https://img.xmu.la` 或 `https://aiba.hk`，不再写入任意地址。
+跳转后会自动打开配置弹窗并填入 API Key。API Key 放在 URL fragment 中，不会随页面请求进入服务器日志；Base URL 始终固定为 `https://www.aiba.hk`。
 如果自己部署了，可以把 `https://canvas.best` 替换成你部署的地址。
 
 ## 效果展示
@@ -109,6 +109,10 @@ https://canvas.best?baseUrl=https://img.xmu.la#apiKey={key}
 
 ## 文档
 
+- [部署文档](部署文档.md)
+- [使用教程](使用教程.md)
+- [使用说明](使用说明.md)
+- [使用技术文档](使用技术文档.md)
 - [快速开始](docs/content/docs/overview/quick-start.mdx)
 - [功能介绍](docs/content/docs/overview/features.mdx)
 - [Render 部署](docs/content/docs/overview/render.mdx)

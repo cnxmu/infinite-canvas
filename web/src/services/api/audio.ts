@@ -6,8 +6,8 @@ import { buildApiUrl, resolveModelRequestConfig, type AiConfig } from "@/stores/
 
 type RequestOptions = { signal?: AbortSignal };
 
-function aiApiUrl(config: AiConfig, path: string) {
-    return buildApiUrl(config.baseUrl, path);
+function aiApiUrl(path: string) {
+    return buildApiUrl(path);
 }
 
 function aiHeaders(config: AiConfig) {
@@ -26,7 +26,7 @@ export async function requestAudioGeneration(config: AiConfig, prompt: string, o
 
     try {
         const response = await axios.post<Blob>(
-            aiApiUrl(requestConfig, "/audio/speech"),
+            aiApiUrl("/audio/speech"),
             {
                 model,
                 input: prompt,
@@ -51,7 +51,6 @@ export async function storeGeneratedAudio(blob: Blob, format = "mp3"): Promise<U
 
 function assertAudioConfig(config: AiConfig, model: string) {
     if (!model) throw new Error("请先配置音频模型");
-    if (!config.baseUrl.trim()) throw new Error("请先配置 Base URL");
     if (!config.apiKey.trim()) throw new Error("请先配置 API Key");
     if (config.apiFormat === "gemini") throw new Error("Gemini 调用格式暂不支持音频生成，请使用 OpenAI 格式渠道");
 }

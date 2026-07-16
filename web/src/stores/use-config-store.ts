@@ -56,19 +56,18 @@ export type WebdavSyncConfig = {
 export const CONFIG_STORE_KEY = "infinite-canvas:ai_config_store";
 export type ModelCapability = "image" | "video" | "text" | "audio";
 const CHANNEL_MODEL_SEPARATOR = "::";
-export const FIXED_BASE_URLS = ["https://img.xmu.la", "https://aiba.hk"] as const;
-const DEFAULT_BASE_URL = FIXED_BASE_URLS[0];
+export const FIXED_BASE_URL = "https://www.aiba.hk";
 
 export const defaultConfig: AiConfig = {
     channelMode: "local",
-    baseUrl: DEFAULT_BASE_URL,
+    baseUrl: FIXED_BASE_URL,
     apiKey: "",
     apiFormat: "openai",
     channels: [
         {
             id: "default",
             name: "默认渠道",
-            baseUrl: DEFAULT_BASE_URL,
+            baseUrl: FIXED_BASE_URL,
             apiKey: "",
             apiFormat: "openai",
             models: ["gpt-image-2", "grok-imagine-video", "gpt-5.5", "gpt-4o-mini-tts"],
@@ -107,16 +106,8 @@ export const defaultWebdavSyncConfig: WebdavSyncConfig = {
     lastSyncedAt: "",
 };
 
-export function normalizeFixedBaseUrl(baseUrl: string | undefined) {
-    const normalized = (baseUrl || "").trim().replace(/\/+$/, "");
-    const exact = FIXED_BASE_URLS.find((url) => url === normalized);
-    if (exact) return exact;
-    try {
-        const origin = new URL(normalized).origin;
-        return FIXED_BASE_URLS.find((url) => url === origin) || DEFAULT_BASE_URL;
-    } catch {
-        return DEFAULT_BASE_URL;
-    }
+export function normalizeFixedBaseUrl(_baseUrl?: string) {
+    return FIXED_BASE_URL;
 }
 
 type ConfigStore = {
@@ -174,7 +165,7 @@ function modelListKey(capability: ModelCapability) {
 
 function isAiConfigReady(config: AiConfig, model: string) {
     const channel = resolveModelChannel(config, model);
-    return Boolean(model.trim() && channel.baseUrl.trim() && channel.apiKey.trim());
+    return Boolean(model.trim() && channel.apiKey.trim());
 }
 
 export const useConfigStore = create<ConfigStore>()(
@@ -265,7 +256,7 @@ export function createModelChannel(channel?: Partial<ModelChannel>): ModelChanne
     return {
         id: channel?.id?.trim() || nanoid(),
         name: channel?.name?.trim() || "新渠道",
-        baseUrl: normalizeFixedBaseUrl(channel?.baseUrl || defaultBaseUrlForApiFormat(apiFormat)),
+        baseUrl: normalizeFixedBaseUrl(channel?.baseUrl),
         apiKey: channel?.apiKey || "",
         apiFormat,
         models: uniqueRawModels(channel?.models || []),
@@ -325,7 +316,7 @@ export function resolveModelRequestConfig(config: AiConfig, value: string) {
     return {
         ...config,
         model: modelOptionName(value || config.model),
-        baseUrl: channel.baseUrl,
+        baseUrl: FIXED_BASE_URL,
         apiKey: channel.apiKey,
         apiFormat: channel.apiFormat,
     };
@@ -363,10 +354,6 @@ function normalizeChannels(config: AiConfig) {
     return channels.map((channel) => ({ ...channel, models: uniqueRawModels(channel.models) }));
 }
 
-export function defaultBaseUrlForApiFormat(_apiFormat: ApiCallFormat) {
-    return DEFAULT_BASE_URL;
-}
-
 function normalizeApiFormat(apiFormat: unknown): ApiCallFormat {
     return apiFormat === "gemini" ? "gemini" : "openai";
 }
@@ -379,28 +366,6 @@ function uniqueModelOptions(models: string[]) {
     return Array.from(new Set((models || []).map((model) => model.trim()).filter(Boolean)));
 }
 
-export function buildApiUrl(baseUrl: string, path: string) {
-    let normalizedBaseUrl = baseUrl.trim().replace(/\/+$/, "");
-    normalizedBaseUrl = normalizeArkPlanBaseUrl(normalizedBaseUrl);
-    const lowerBaseUrl = normalizedBaseUrl.toLowerCase();
-    const apiBaseUrl = lowerBaseUrl.endsWith("/v1") || lowerBaseUrl.endsWith("/api/v3") || lowerBaseUrl.endsWith("/api/plan/v3") ? normalizedBaseUrl : `${normalizedBaseUrl}/v1`;
-    return `${apiBaseUrl}${path}`;
-}
-
-function normalizeArkPlanBaseUrl(baseUrl: string) {
-    try {
-        const url = new URL(baseUrl);
-        const path = url.pathname.replace(/\/+$/, "");
-        const lowerPath = path.toLowerCase();
-        const arkPlanIndex = lowerPath.indexOf("/api/plan/v3");
-        if (arkPlanIndex < 0) return baseUrl;
-        const end = arkPlanIndex + "/api/plan/v3".length;
-        if (lowerPath.length !== end && lowerPath[end] !== "/") return baseUrl;
-        url.pathname = path.slice(0, end);
-        url.search = "";
-        url.hash = "";
-        return url.toString().replace(/\/+$/, "");
-    } catch {
-        return baseUrl;
-    }
+export function buildApiUrl(path: string) {
+    return `${FIXED_BASE_URL}/v1${path.startsWith("/") ? path : `/${path}`}`;
 }
